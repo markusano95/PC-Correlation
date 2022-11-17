@@ -1,0 +1,140 @@
+import numpy as np
+import math
+import pandas as pd
+import matplotlib.pyplot as plt
+import sys
+import os
+
+# os.remove(r'D:/Hiwi-Shuwei/FZI/Time series/PS-Cor/result.txt')
+
+data = pd.read_parquet('D:/Hiwi-Shuwei/FZI/Time series/Data/test_vw_real.parquet', engine='fastparquet')
+data.plot(x='time', y='dim_0')
+data2 = data['dim_0'].tolist()
+
+lookback = 40
+times =data['time']
+data3 = list(data['dim_0'].values)
+counter_ = -1
+data3_series = []
+for second in times:
+    counter_ += 1
+    # if counter_ % 1000 == 0: print(counter_)
+    if counter_ >= lookback:
+        data3_series.append(data3[counter_ - lookback:counter_])
+
+timeseries_df = pd.DataFrame(data3_series)
+s1 = timeseries_df.shape
+# print(s1)
+# print(timeseries_df.head())
+
+def split_seq(seq, num_pieces):
+    start = 0
+    for i in range(num_pieces):
+        stop = start + len(seq[i::num_pieces])
+        yield seq[start:stop]
+        start = stop
+
+def pearson(s1, s2):
+    """take two pd.Series objects and return a pearson corrleation"""
+    s1_c = s1 - np.mean(s1)
+    s2_c = s2 - np.mean(s2)
+    return np.sum(s1_c * s2_c) / np.sqrt(np.sum(s1_c ** 2) * np.sum(s2_c ** 2))
+
+counter = 5
+complexity = 10
+
+for index, row in timeseries_df.iterrows():
+    counter -= 1
+    # look for desired shape
+    plt.plot([np.mean(r) for r in split_seq(list(row.values), complexity)])
+    plt.grid()
+    # plt.show()
+    plt.close()
+    if counter < 4:
+        break
+
+counter_ = -1
+data4_series = {}
+for i in range(len(timeseries_df)):
+    data4_series[i] = [np.mean(t) for t in split_seq( timeseries_df.loc[i].values.tolist(), complexity)]
+
+class Logger(object):
+    def __init__(self, filename="Default.log"):
+        self.terminal = sys.stdout
+        self.log = open(filename, "a")
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
+
+    def flush(self):
+        pass
+
+
+path = os.path.abspath(os.path.dirname(__file__))
+type = sys.getfilesystemencoding()
+sys.stdout = Logger('D:/Hiwi-Shuwei/FZI/Time series/PS-Cor/result.txt')
+
+# print(path)
+# print(os.path.dirname(__file__))
+# print('------------------')
+
+for i in range(0,len(timeseries_df)//10,10):
+    for j in range(i+50,len(timeseries_df)//10,10):
+        correz = pearson(data4_series[i],data4_series[j])
+        if correz > 0.7:
+            # print(i,data4_series[i])
+            # print(j,data4_series[j])
+            print('this is', i)
+            print('this is', j)
+            print(correz)
+
+            # data = open("D:/Hiwi-Shuwei/FZI/Time series/PS-Cor/result.txt", 'w', encoding="utf-8")
+            # sys.stdout = data
+
+
+            plt.rcParams['font.sans-serif'] = ['SimHei']
+            plt.rcParams['axes.unicode_minus'] = False
+
+            t = np.arange(0.0, 2.0, 0.1)
+            s = np.sin(t * np.pi)
+
+            plt.figure(figsize=(8, 8), dpi=80)
+            plt.figure(1)
+            ax1 = plt.subplot(221)
+            c = timeseries_df.loc[i].values.tolist()
+            v = range(i,i+len(c))
+            plt.plot(v, c, color="r", linestyle="--")
+            ax2 = plt.subplot(222)
+            b = timeseries_df.loc[j].values.tolist()
+            n = range(j,j+len(b))
+            plt.plot(n, b, color="b", linestyle="-")
+
+            ax3 = plt.subplot(212)
+            x = data['time'].tolist()
+            y = data['dim_0'].tolist()
+
+            x1 = x[i:i+len(c)]
+            x2 = x[j:j+len(b)]
+
+            y1 = y[i:i+len(c)]
+            y2 = y[j:j+len(b)]
+
+            # plt.plot(x3, y3, 'b-')
+            plt.plot(x1, y1, 'r-', linestyle="--")
+            plt.plot(x2, y2, 'b-', linestyle="-")
+
+            plt.plot(x, y, color="lightgrey", linestyle="-.")
+            plt.show()
+
+def read_tablemethod(filename):
+    daten = pd.read_table(filename, header=None, delim_whitespace=True)
+    return daten
+
+
+if __name__ == "__main__":
+    daten = read_tablemethod('D:/Hiwi-Shuwei/FZI/Time series/PS-Cor/result.txt')
+    daten2 = []
+
+
+daten = open("D:/Hiwi-Shuwei/FZI/Time series/PS-Cor/result.txt", 'w').close()
