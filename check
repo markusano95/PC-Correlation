@@ -1,0 +1,27 @@
+# -*- coding: utf-8 -
+import os
+
+# get the current abs path
+cur_path = os.path.dirname(os.path.realpath(__file__))
+
+# Temporary variables
+os.putenv("PYTHONPATH", cur_path)
+
+
+def run_case():
+    # Use os.path.join to concatenate addresses
+    case_path = os.path.join(cur_path, "testcase")
+
+    # Get all file names in the current directory
+    lst = os.listdir(case_path)
+    for c in lst:
+        # Judging that the file name ends with .py; adding and c.find("DemoGet") == -1 is to remove the DemoGet.py file
+        if os.path.splitext(c)[1] == '.py':
+            # check name
+            # print(c)
+            # run the file  python main.py
+            os.system('python3 {}'.format(os.path.join(case_path, c)))
+
+
+if __name__ == "__main__":
+    run_case()
